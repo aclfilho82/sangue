@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Fluxo Sanguíneo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0c1a2d, #1a3a5f);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+        
+        header {
+            text-align: center;
+            margin: 20px 0 30px;
+            max-width: 800px;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            opacity: 0.9;
+            max-width: 700px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            max-width: 1200px;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        
+        .control-panel {
+            background: rgba(10, 25, 47, 0.85);
+            border-radius: 20px;
+            padding: 25px;
+            width: 100%;
+            max-width: 350px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            border: 1px solid #1e4a7e;
+        }
+        
+        .panel-title {
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 1.8rem;
+            color: #ff7e5f;
+        }
+        
+        .control-group {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #2a4a6d;
+        }
+        
+        .control-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .control-title i {
+            margin-right: 10px;
+            font-size: 1.5rem;
+        }
+        
+        .slider-container {
+            margin: 20px 0;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .value-display {
+            font-weight: bold;
+            color: #ff9e7d;
+            font-size: 1.1rem;
+        }
+        
+        .pressure-slider {
+            width: 100%;
+            height: 20px;
+            -webkit-appearance: none;
+            background: linear-gradient(to right, #4a00e0, #8e2de2);
+            border-radius: 10px;
+            outline: none;
+            margin: 15px 0;
+        }
+        
+        .pressure-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(255, 126, 95, 0.8);
+            border: 2px solid #ff7e5f;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(to right, #4a00e0, #8e2de2);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        .btn.reset {
+            background: linear-gradient(to right, #ff416c, #ff4b2b);
+        }
+        
+        .simulation-area {
+            background: rgba(10, 25, 47, 0.85);
+            border-radius: 20px;
+            padding: 25px;
+            flex: 1;
+            min-width: 300px;
+            max-width: 800px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            border: 1px solid #1e4a7e;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sim-title {
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 1.8rem;
+            color: #ff7e5f;
+        }
+        
+        .vessel-container {
+            position: relative;
+            height: 300px;
+            background: #0a1a2f;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 2px solid #1e4a7e;
+            margin-bottom: 25px;
+        }
+        
+        .vessel {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 40px;
+            transform: translateY(-50%);
+            overflow: hidden;
+        }
+        
+        .blood-cell {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #c70039;
+            opacity: 0.8;
+            box-shadow: 0 0 10px rgba(199, 0, 57, 0.5);
+        }
+        
+        .obstruction {
+            position: absolute;
+            height: 80px;
+            background: #2d3436;
+            border-radius: 10px;
+            border: 2px solid #636e72;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: bold;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        
+        .heart-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .heart {
+            width: 120px;
+            height: 120px;
+            position: relative;
+            transform: rotate(-45deg);
+            background: #ff6b6b;
+            box-shadow: 0 0 40px rgba(255, 107, 107, 0.6);
+            border-radius: 50% 50% 0 50%;
+            transition: all 0.5s;
+        }
+        
+        .heart:before, .heart:after {
+            content: '';
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            background: #ff6b6b;
+            border-radius: 50%;
+        }
+        
+        .heart:before {
+            top: -60px;
+            left: 0;
+        }
+        
+        .heart:after {
+            top: 0;
+            left: 60px;
+        }
+        
+        .heart-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            font-size: 0.9rem;
+            width: 80px;
+        }
+        
+        .info-panel {
+            background: rgba(10, 25, 47, 0.85);
+            border-radius: 20px;
+            padding: 25px;
+            max-width: 1200px;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            border: 1px solid #1e4a7e;
+            margin-top: 10px;
+        }
+        
+        .info-title {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            color: #ff7e5f;
+        }
+        
+        .info-content {
+            line-height: 1.7;
+            font-size: 1.1rem;
+        }
+        
+        .info-content p {
+            margin-bottom: 15px;
+        }
+        
+        .info-content ul {
+            padding-left: 30px;
+            margin: 15px 0;
+        }
+        
+        .info-content li {
+            margin-bottom: 10px;
+        }
+        
+        .highlight {
+            color: #ff9e7d;
+            font-weight: bold;
+        }
+        
+        footer {
+            margin-top: 30px;
+            text-align: center;
+            padding: 20px;
+            width: 100%;
+            font-size: 1.1rem;
+            background: rgba(10, 25, 47, 0.7);
+            border-radius: 10px;
+            max-width: 1200px;
+        }
+        
+        .author {
+            font-weight: bold;
+            color: #ff9e7d;
+            font-size: 1.2rem;
+            margin-top: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .control-panel, .simulation-area {
+                max-width: 100%;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>❤️ Simulador de Fluxo Sanguíneo</h1>
+        <p class="subtitle">Visualize os efeitos da pressão arterial e obstruções vasculares no sistema circulatório e no coração</p>
+    </header>
+    
+    <div class="container">
+        <div class="control-panel">
+            <h2 class="panel-title">Controles</h2>
+            
+            <div class="control-group">
+                <h3 class="control-title"><i>📈</i> Pressão Arterial</h3>
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>Baixa Pressão</span>
+                        <span class="value-display">120/80 mmHg</span>
+                    </div>
+                    <input type="range" min="80" max="200" value="120" class="pressure-slider" id="pressureSlider">
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                        <span>80</span>
+                        <span>140</span>
+                        <span>200</span>
+                    </div>
+                </div>
+                <p>Aumente a pressão para ver o fluxo sanguíneo acelerar e o coração trabalhar mais.</p>
+            </div>
+            
+            <div class="control-group">
+                <h3 class="control-title"><i>⚠️</i> Obstruções</h3>
+                <div class="btn-group">
+                    <button class="btn" id="addObstruction">Adicionar Obstrução</button>
+                    <button class="btn" id="addPlaque">Adicionar Placa</button>
+                    <button class="btn reset" id="resetBtn">Reiniciar</button>
+                </div>
+                <p style="margin-top: 15px;">Adicione obstruções para simular aterosclerose e veja o efeito no fluxo sanguíneo e no coração.</p>
+            </div>
+            
+            <div class="control-group" style="border-bottom: none; padding-bottom: 0;">
+                <h3 class="control-title"><i>⚙️</i> Status do Sistema</h3>
+                <div id="systemStatus" style="background: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 10px; margin-top: 10px;">
+                    <p><strong>Fluxo Sanguíneo:</strong> <span id="flowStatus">Normal</span></p>
+                    <p><strong>Estado do Coração:</strong> <span id="heartStatus">Normal</span></p>
+                    <p><strong>Obstruções:</strong> <span id="obstructionCount">0</span></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="simulation-area">
+            <h2 class="sim-title">Simulação de Fluxo Sanguíneo</h2>
+            <div class="vessel-container">
+                <div class="vessel" id="bloodVessel">
+                    <!-- Células sanguíneas serão geradas por JavaScript -->
+                </div>
+            </div>
+            
+            <div class="heart-container">
+                <div class="heart" id="heart">
+                    <div class="heart-label">Coração</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="info-panel">
+        <h2 class="info-title">Biofísica do Sistema Circulatório</h2>
+        <div class="info-content">
+            <p>O sistema circulatório é uma rede complexa que transporta sangue, oxigênio e nutrientes por todo o corpo. A pressão arterial e a saúde dos vasos sanguíneos são essenciais para seu funcionamento adequado.</p>
+            
+            <p><span class="highlight">Pressão Arterial:</span> É a força que o sangue exerce contra as paredes das artérias. Quando elevada (hipertensão), força o coração a trabalhar mais, podendo levar a:</p>
+            <ul>
+                <li>Alargamento do coração e insuficiência cardíaca</li>
+                <li>Danos aos vasos sanguíneos</li>
+                <li>Aumento do risco de AVC e ataque cardíaco</li>
+            </ul>
+            
+            <p><span class="highlight">Obstruções Vasculares:</span> O acúmulo de placas de gordura (aterosclerose) nas paredes arteriais pode:</p>
+            <ul>
+                <li>Reduzir o fluxo sanguíneo para órgãos vitais</li>
+                <li>Aumentar a pressão arterial</li>
+                <li>Causar isquemia (falta de oxigênio nos tecidos)</li>
+                <li>Levar a infartos e AVCs quando as placas se rompem</li>
+            </ul>
+            
+            <p><span class="highlight">Efeitos no Coração:</span> Quando encontra resistência (obstruções ou alta pressão), o coração precisa bombear com mais força, levando à hipertrofia ventricular e reduzindo sua eficiência a longo prazo.</p>
+        </div>
+    </div>
+    
+    <footer>
+        <p>Simulador de Fluxo Sanguíneo | Desenvolvido para fins educacionais em biofísica</p>
+        <p class="author">Desenvolvido Prof. Ms. Antonio Carlos de Lima Filho</p>
+    </footer>
+
+    <script>
+        // Elementos DOM
+        const pressureSlider = document.getElementById('pressureSlider');
+        const pressureValue = document.querySelector('.value-display');
+        const addObstructionBtn = document.getElementById('addObstruction');
+        const addPlaqueBtn = document.getElementById('addPlaque');
+        const resetBtn = document.getElementById('resetBtn');
+        const bloodVessel = document.getElementById('bloodVessel');
+        const heart = document.getElementById('heart');
+        const flowStatus = document.getElementById('flowStatus');
+        const heartStatus = document.getElementById('heartStatus');
+        const obstructionCount = document.getElementById('obstructionCount');
+        
+        // Variáveis de estado
+        let pressure = 120;
+        let obstructions = [];
+        let heartRate = 60;
+        let heartBeatInterval;
+        let cells = [];
+        let obstructionId = 0;
+        
+        // Inicializar
+        function init() {
+            updatePressureDisplay();
+            createBloodCells();
+            startHeartBeat();
+            updateSystemStatus();
+        }
+        
+        // Criar células sanguíneas
+        function createBloodCells() {
+            bloodVessel.innerHTML = '';
+            cells = [];
+            
+            // Criar múltiplas células sanguíneas
+            for (let i = 0; i < 25; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'blood-cell';
+                
+                // Posicionar aleatoriamente ao longo do vaso
+                const startPos = Math.random() * (bloodVessel.offsetWidth + 200) - 100;
+                cell.style.left = `${startPos}px`;
+                
+                // Posição vertical aleatória dentro do vaso
+                const topPos = 10 + Math.random() * 60;
+                cell.style.top = `${topPos}px`;
+                
+                bloodVessel.appendChild(cell);
+                cells.push({
+                    element: cell,
+                    position: startPos,
+                    speed: 1 + Math.random() * 2,
+                    top: topPos
+                });
+            }
+        }
+        
+        // Atualizar pressão
+        function updatePressure() {
+            pressure = parseInt(pressureSlider.value);
+            updatePressureDisplay();
+            updateSystemStatus();
+            updateHeartAppearance();
+        }
+        
+        // Atualizar exibição da pressão
+        function updatePressureDisplay() {
+            // Calcular pressão diastólica (aproximadamente 2/3 da sistólica)
+            const diastolic = Math.round(pressure * 0.67);
+            pressureValue.textContent = `${pressure}/${diastolic} mmHg`;
+        }
+        
+        // Adicionar obstrução
+        function addObstruction(type) {
+            obstructionId++;
+            
+            // Escolher posição aleatória no vaso
+            const position = 100 + Math.random() * (bloodVessel.offsetWidth - 200);
+            
+            // Determinar tamanho baseado no tipo
+            const width = type === 'plaque' ? 80 + Math.random() * 60 : 40 + Math.random() * 40;
+            
+            const obstruction = document.createElement('div');
+            obstruction.className = 'obstruction';
+            obstruction.id = `obs-${obstructionId}`;
+            obstruction.style.left = `${position}px`;
+            obstruction.style.width = `${width}px`;
+            obstruction.textContent = type === 'plaque' ? 'PLACA' : 'OBST';
+            obstruction.dataset.type = type;
+            obstruction.dataset.width = width;
+            obstruction.dataset.position = position;
+            
+            if (type === 'plaque') {
+                obstruction.style.background = 'linear-gradient(to right, #636e72, #2d3436)';
+            }
+            
+            bloodVessel.appendChild(obstruction);
+            obstructions.push({
+                id: obstructionId,
+                element: obstruction,
+                position: position,
+                width: width,
+                type: type
+            });
+            
+            updateSystemStatus();
+        }
+        
+        // Reiniciar simulação
+        function resetSimulation() {
+            // Remover todas as obstruções
+            obstructions.forEach(obs => {
+                if (obs.element.parentNode) {
+                    obs.element.parentNode.removeChild(obs.element);
+                }
+            });
+            
+            obstructions = [];
+            pressureSlider.value = 120;
+            pressure = 120;
+            updatePressureDisplay();
+            updateSystemStatus();
+            updateHeartAppearance();
+        }
+        
+        // Atualizar status do sistema
+        function updateSystemStatus() {
+            obstructionCount.textContent = obstructions.length;
+            
+            // Atualizar status de fluxo
+            if (obstructions.length === 0) {
+                if (pressure < 100) {
+                    flowStatus.textContent = 'Fluxo lento';
+                    flowStatus.style.color = '#f6e58d';
+                } else if (pressure > 160) {
+                    flowStatus.textContent = 'Fluxo turbulento';
+                    flowStatus.style.color = '#ff7979';
+                } else {
+                    flowStatus.textContent = 'Normal';
+                    flowStatus.style.color = '#badc58';
+                }
+            } else {
+                if (pressure < 100) {
+                    flowStatus.textContent = 'Fluxo reduzido';
+                    flowStatus.style.color = '#f6e58d';
+                } else if (pressure > 160) {
+                    flowStatus.textContent = 'Fluxo crítico!';
+                    flowStatus.style.color = '#ff7979';
+                } else {
+                    flowStatus.textContent = 'Fluxo obstruído';
+                    flowStatus.style.color = '#ffbe76';
+                }
+            }
+            
+            // Atualizar status do coração
+            if (obstructions.length > 0 || pressure > 160) {
+                heartStatus.textContent = 'Sob estresse';
+                heartStatus.style.color = '#ff7979';
+            } else if (pressure < 100) {
+                heartStatus.textContent = 'Batimento fraco';
+                heartStatus.style.color = '#f6e58d';
+            } else {
+                heartStatus.textContent = 'Normal';
+                heartStatus.style.color = '#badc58';
+            }
+        }
+        
+        // Atualizar aparência do coração
+        function updateHeartAppearance() {
+            // Calcular escala baseada na pressão
+            let scale = 1;
+            let color = '#ff6b6b';
+            
+            if (pressure > 160) {
+                scale = 1.2;
+                color = '#ff4757';
+            } else if (pressure > 140) {
+                scale = 1.1;
+                color = '#ff6b6b';
+            } else if (pressure < 100) {
+                scale = 0.9;
+                color = '#ffa502';
+            }
+            
+            // Aplicar efeito adicional se houver obstruções
+            if (obstructions.length > 0) {
+                scale += obstructions.length * 0.05;
+                color = '#ff6b81';
+            }
+            
+            heart.style.transform = `rotate(-45deg) scale(${scale})`;
+            heart.style.background = color;
+            heart.style.boxShadow = `0 0 40px ${color}80`;
+            
+            // Atualizar pseudo-elementos também
+            const style = document.createElement('style');
+            style.innerHTML = `
+                .heart:before, .heart:after {
+                    background: ${color} !important;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        // Animar batimento cardíaco
+        function startHeartBeat() {
+            if (heartBeatInterval) clearInterval(heartBeatInterval);
+            
+            // Calcular intervalo baseado na pressão
+            let interval = 1000;
+            
+            if (pressure > 160) {
+                interval = 600;
+            } else if (pressure > 140) {
+                interval = 700;
+            } else if (pressure < 100) {
+                interval = 1200;
+            }
+            
+            // Aplicar efeito adicional se houver obstruções
+            if (obstructions.length > 0) {
+                interval = Math.max(500, interval - (obstructions.length * 50));
+            }
+            
+            // Animação de batimento
+            heartBeatInterval = setInterval(() => {
+                heart.style.transform = `rotate(-45deg) scale(${pressure > 160 || obstructions.length > 0 ? 1.25 : 1.15})`;
+                
+                setTimeout(() => {
+                    updateHeartAppearance();
+                }, 200);
+            }, interval);
+        }
+        
+        // Animar células sanguíneas
+        function animateBloodCells() {
+            cells.forEach(cell => {
+                // Calcular velocidade baseada na pressão
+                let speed = (pressure / 100) * cell.speed;
+                
+                // Verificar se há obstruções no caminho
+                let obstructionFactor = 1;
+                
+                obstructions.forEach(obs => {
+                    const obsLeft = obs.position;
+                    const obsRight = obs.position + obs.width;
+                    
+                    // Se a célula está se aproximando da obstrução
+                    if (cell.position + 20 > obsLeft && cell.position < obsRight + 50) {
+                        // Reduzir velocidade antes e durante a obstrução
+                        const distanceToObs = Math.max(0, obsLeft - cell.position);
+                        
+                        if (distanceToObs < 100) {
+                            obstructionFactor = 0.3;
+                            
+                            // Efeito visual - células se acumulando
+                            if (Math.random() < 0.1) {
+                                cell.top += (Math.random() - 0.5) * 10;
+                                cell.top = Math.max(10, Math.min(70, cell.top));
+                                cell.element.style.top = `${cell.top}px`;
+                            }
+                        }
+                    }
+                });
+                
+                // Atualizar posição
+                cell.position += speed * obstructionFactor;
+                
+                // Se a célula saiu da tela, reiniciar no início
+                if (cell.position > bloodVessel.offsetWidth + 50) {
+                    cell.position = -50;
+                    cell.top = 10 + Math.random() * 60;
+                }
+                
+                cell.element.style.left = `${cell.position}px`;
+            });
+            
+            requestAnimationFrame(animateBloodCells);
+        }
+        
+        // Event Listeners
+        pressureSlider.addEventListener('input', () => {
+            updatePressure();
+            startHeartBeat();
+        });
+        
+        addObstructionBtn.addEventListener('click', () => {
+            addObstruction('obstruction');
+        });
+        
+        addPlaqueBtn.addEventListener('click', () => {
+            addObstruction('plaque');
+        });
+        
+        resetBtn.addEventListener('click', resetSimulation);
+        
+        // Inicializar simulação
+        init();
+        animateBloodCells();
+    </script>
+</body>
+</html>
